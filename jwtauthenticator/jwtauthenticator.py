@@ -36,7 +36,9 @@ class JSONWebTokenLoginHandler(BaseHandler):
         elif tokenParam:
            token = tokenParam
         else:
-           raise web.HTTPError(401)
+           #raise web.HTTPError(401)
+           credentials = self.get_xdmod_credentials()
+           print(credentials)
 
         claims = "";
         if secret:
@@ -56,6 +58,19 @@ class JSONWebTokenLoginHandler(BaseHandler):
              _url = next_url
 
         self.redirect(_url)
+
+    def get_xdmod_credentials(self):
+        client = httpclient.HTTPClient()
+        http_client = httpclient.HTTPClient()
+        try:
+            response = client.fetch("/rest/users/current/api/jsonwebtoken")
+            print(response.body)
+        except httpclient.HTTPError as e:
+            print("Error: " + str(e))
+        except Exception as e:
+            print("Error: " + str(e))
+        http_client.close()
+        return response
 
     @staticmethod
     def verify_jwt_with_claims(token, signing_certificate, audience):
