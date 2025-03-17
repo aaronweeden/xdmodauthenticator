@@ -1,16 +1,11 @@
-import asyncio
-import logging
-
+from jose import jwt
+from jose.exceptions import ExpiredSignatureError
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.auth import Authenticator
 from jupyterhub.auth import LocalAuthenticator
 from jupyterhub.utils import url_path_join
 from tornado import gen, web
-from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 from traitlets import Unicode, Bool
-from jose import jwt
-from jose.exceptions import ExpiredSignatureError
-
 
 class XDMoDLoginHandler(BaseHandler):
 
