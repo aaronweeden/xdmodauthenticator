@@ -20,7 +20,6 @@ class XDMoDLoginHandler(BaseHandler):
         secret = self.authenticator.secret
         username_claim_field = self.authenticator.username_claim_field
         audience = self.authenticator.expected_audience
-        tokenParam = self.get_argument(param_name, default=False)
 
         cookie = self.get_cookie("xdmod_jwt", "")
         if cookie:
@@ -79,9 +78,9 @@ class XDMoDLoginHandler(BaseHandler):
             return username
 
 
-class JSONWebTokenAuthenticator(Authenticator):
+class XDMoDAuthenticator(Authenticator):
     """
-    Accept the authenticated JSON Web Token from header.
+    Authenticate using an instance of XDMoD.
     """
     signing_certificate = Unicode(
         config=True,
@@ -96,8 +95,7 @@ class JSONWebTokenAuthenticator(Authenticator):
         default_value='upn',
         config=True,
         help="""
-        The field in the claims that contains the user name. It can be either a straight username,
-        of an email/userPrincipalName.
+        The field in the claims that contains the username.
         """
     )
 
