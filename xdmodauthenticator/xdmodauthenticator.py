@@ -12,7 +12,7 @@ from jose import jwt
 from jose.exceptions import ExpiredSignatureError
 
 
-class JSONWebTokenLoginHandler(BaseHandler):
+class XDMoDLoginHandler(BaseHandler):
 
     def get(self):
         header_name = self.authenticator.header_name
@@ -139,7 +139,7 @@ class JSONWebTokenAuthenticator(Authenticator):
 
     def get_handlers(self, app):
         return [
-            (r'/login', JSONWebTokenLoginHandler),
+            (r'/login', XDMoDLoginHandler),
         ]
 
     @gen.coroutine
@@ -147,7 +147,7 @@ class JSONWebTokenAuthenticator(Authenticator):
         raise NotImplementedError()
 
 
-class JSONWebTokenLocalAuthenticator(JSONWebTokenAuthenticator, LocalAuthenticator):
+class XDMoDAuthenticator(XDMoDAuthenticator, LocalAuthenticator):
     """
     A version of JSONWebTokenAuthenticator that mixes in local system user creation
     """
