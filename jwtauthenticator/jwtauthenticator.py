@@ -1,10 +1,16 @@
+import asyncio
+import logging
+
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.auth import Authenticator
 from jupyterhub.auth import LocalAuthenticator
 from jupyterhub.utils import url_path_join
 from tornado import gen, web
+from tornado.httpclient import AsyncHTTPClient, HTTPRequest, HTTPError
 from traitlets import Unicode, Bool
 from jose import jwt
+from jose.exceptions import ExpiredSignatureError
+
 
 class JSONWebTokenLoginHandler(BaseHandler):
 
@@ -21,32 +27,18 @@ class JSONWebTokenLoginHandler(BaseHandler):
         audience = self.authenticator.expected_audience
         tokenParam = self.get_argument(param_name, default=False)
 
-        if auth_header_content and tokenParam:
-           raise web.HTTPError(400)
-        elif auth_header_content:
-           if header_is_authorization:
-              # we should not see "token" as first word in the AUTHORIZATION header, if we do it could mean someone coming in with a stale API token
-              if auth_header_content.split()[0] != "bearer":
-                 raise web.HTTPError(403)
-              token = auth_header_content.split()[1]
-           else:
-              token = auth_header_content
-        elif auth_cookie_content:
-           token = auth_cookie_content
-        elif tokenParam:
-           token = tokenParam
+        cookie = self.get_cookie("xdmod_jwt", "")
+        if cookie:
+            try:
+                claims = "";
+                if secret:
+                    claims = self.verify_jwt_using_secret(cookie, secret, audience)
+                elif signing_certificate:
+                    claims = self.verify_jwt_with_claims(cookie, signing_certificate, audience)
+            except ExpiredSignatureError:
+                self.redirect(self.authenticator.authorization_endpoint)
         else:
-           #raise web.HTTPError(401)
-           credentials = self.get_xdmod_credentials()
-           print(credentials)
-
-        claims = "";
-        if secret:
-            claims = self.verify_jwt_using_secret(token, secret, audience)
-        elif signing_certificate:
-            claims = self.verify_jwt_with_claims(token, signing_certificate, audience)
-        else:
-           raise web.HTTPError(401)
+            self.redirect(self.authenticator.authorization_endpoint)
 
         username = self.retrieve_username(claims, username_claim_field)
         user = self.user_from_username(username)
@@ -58,19 +50,6 @@ class JSONWebTokenLoginHandler(BaseHandler):
              _url = next_url
 
         self.redirect(_url)
-
-    def get_xdmod_credentials(self):
-        client = httpclient.HTTPClient()
-        http_client = httpclient.HTTPClient()
-        try:
-            response = client.fetch("/rest/users/current/api/jsonwebtoken")
-            print(response.body)
-        except httpclient.HTTPError as e:
-            print("Error: " + str(e))
-        except Exception as e:
-            print("Error: " + str(e))
-        http_client.close()
-        return response
 
     @staticmethod
     def verify_jwt_with_claims(token, signing_certificate, audience):
@@ -151,6 +130,12 @@ class JSONWebTokenAuthenticator(Authenticator):
     secret = Unicode(
         config=True,
         help="""Shared secret key for siging JWT token.  If defined, it overrides any setting for signing_certificate""")
+
+    authorization_endpoint = Unicode(
+        default_value='/rest/users/current/api/jsonwebtoken',
+        config=True,
+        help=""" XDMoD REST endpoint to authorize user """
+    )
 
     def get_handlers(self, app):
         return [
