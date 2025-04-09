@@ -18,10 +18,10 @@ class XDMoDLoginHandler(BaseHandler):
         username_claim_field = self.authenticator.username_claim_field
         audience = self.authenticator.expected_audience
 
-        cookie = self.get_cookie(self.authenticator.xdmod_cookie_name, "")
-        claims = ""
+        cookie = self.get_cookie(self.authenticator.xdmod_cookie_name, None)
         if cookie:
             try:
+                claims = ""
                 if secret:
                     claims = self.verify_jwt_using_secret(cookie, secret, audience)
                 elif signing_certificate:
@@ -53,14 +53,10 @@ class XDMoDLoginHandler(BaseHandler):
 
     @staticmethod
     def retrieve_username(claims, username_claim_field):
-        # retrieve the username from the claims
         username = claims[username_claim_field]
         if "@" in username:
-            # process username as if email, pull out string before '@' symbol
             return username.split("@")[0]
-
         else:
-            # assume not username and return the user
             return username
 
 
