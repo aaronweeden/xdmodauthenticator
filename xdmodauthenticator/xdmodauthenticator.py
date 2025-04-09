@@ -19,7 +19,7 @@ class XDMoDLoginHandler(BaseHandler):
         audience = self.authenticator.expected_audience
 
         cookie = self.get_cookie(self.authenticator.cookie_name, "")
-        claims = "";
+        claims = ""
         if cookie:
             try:
                 if secret:
