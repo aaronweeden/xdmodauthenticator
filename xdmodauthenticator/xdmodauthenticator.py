@@ -45,11 +45,11 @@ class XDMoDLoginHandler(BaseHandler):
     @staticmethod
     def verify_jwt_with_claims(token, signing_certificate, audience):
         with open(signing_certificate, 'r') as rsa_public_key_file:
-            return jwt.decode(token, rsa_public_key_file.read(), audience=audience, options=opts)
+            return jwt.decode(token, rsa_public_key_file.read(), audience=audience)
 
     @staticmethod
     def verify_jwt_using_secret(json_web_token, secret, audience):
-        return jwt.decode(json_web_token, secret, algorithms=list(jwt.ALGORITHMS.SUPPORTED), audience=audience, options=opts)
+        return jwt.decode(json_web_token, secret, algorithms=list(jwt.ALGORITHMS.SUPPORTED), audience=audience)
 
     @staticmethod
     def retrieve_username(claims, username_claim_field):
