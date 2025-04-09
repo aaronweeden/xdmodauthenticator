@@ -18,7 +18,7 @@ class XDMoDLoginHandler(BaseHandler):
         username_claim_field = self.authenticator.username_claim_field
         audience = self.authenticator.expected_audience
 
-        cookie = self.get_cookie(self.authenticator.cookie_name, "")
+        cookie = self.get_cookie(self.authenticator.xdmod_cookie_name, "")
         claims = ""
         if cookie:
             try:
