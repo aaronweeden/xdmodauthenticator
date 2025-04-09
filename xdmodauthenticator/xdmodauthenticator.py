@@ -11,17 +11,14 @@ class XDMoDLoginHandler(BaseHandler):
 
     def get(self):
         header_name = self.authenticator.header_name
-        param_name = self.authenticator.param_name
-        header_is_authorization = self.authenticator.header_is_authorization
 
-        auth_header_content = self.request.headers.get(header_name, "")
         auth_cookie_content = self.get_cookie("XSRF-TOKEN", "")
         signing_certificate = self.authenticator.signing_certificate
         secret = self.authenticator.secret
         username_claim_field = self.authenticator.username_claim_field
         audience = self.authenticator.expected_audience
 
-        cookie = self.get_cookie("xdmod_jwt", "")
+        cookie = self.get_cookie(self.authenticator.cookie_name, "")
         if cookie:
             try:
                 claims = "";
@@ -47,22 +44,11 @@ class XDMoDLoginHandler(BaseHandler):
 
     @staticmethod
     def verify_jwt_with_claims(token, signing_certificate, audience):
-        # If no audience is supplied then assume we're not verifying the audience field.
-        if audience == "":
-            opts = {"verify_aud": False}
-        else:
-            opts = {}
         with open(signing_certificate, 'r') as rsa_public_key_file:
             return jwt.decode(token, rsa_public_key_file.read(), audience=audience, options=opts)
 
     @staticmethod
     def verify_jwt_using_secret(json_web_token, secret, audience):
-        # If no audience is supplied then assume we're not verifying the audience field.
-        if audience == "":
-            opts = {"verify_aud": False}
-        else:
-            opts = {}
-        
         return jwt.decode(json_web_token, secret, algorithms=list(jwt.ALGORITHMS.SUPPORTED), audience=audience, options=opts)
 
     @staticmethod
@@ -92,15 +78,12 @@ class XDMoDAuthenticator(Authenticator):
     )
 
     username_claim_field = Unicode(
-        default_value='upn',
+        default_value='sub',
         config=True,
-        help="""
-        The field in the claims that contains the username.
-        """
+        help=""" The claim field that contains the username. """
     )
 
     expected_audience = Unicode(
-        default_value='',
         config=True,
         help="""HTTP header to inspect for the authenticated JSON Web Token."""
     )
@@ -108,17 +91,8 @@ class XDMoDAuthenticator(Authenticator):
     header_name = Unicode(
         default_value='Authorization',
         config=True,
-        help="""HTTP header to inspect for the authenticated JSON Web Token.""")
-        
-    header_is_authorization = Bool(
-        default_value=True,
-        config=True,
-        help="""Treat the inspected header as an Authorization header.""")
-
-    param_name = Unicode(
-        config=True,
-        default_value='access_token',
-        help="""The name of the query parameter used to specify the JWT token""")
+        help="""HTTP header to inspect for the authenticated JSON Web Token."""
+    )
 
     secret = Unicode(
         config=True,
@@ -128,6 +102,12 @@ class XDMoDAuthenticator(Authenticator):
         default_value='/rest/users/current/api/jsonwebtoken',
         config=True,
         help=""" XDMoD REST endpoint to authorize user """
+    )
+
+    xdmod_cookie_name = Unicode(
+        default_value='xdmod_jupyterhub_token',
+        config=True,
+        help=""" Name of cookie set by XDMoD """
     )
 
     def get_handlers(self, app):
@@ -142,6 +122,6 @@ class XDMoDAuthenticator(Authenticator):
 
 class XDMoDAuthenticator(XDMoDAuthenticator, LocalAuthenticator):
     """
-    A version of JSONWebTokenAuthenticator that mixes in local system user creation
+    A version of the Authenticator that mixes in local system user creation
     """
     pass
