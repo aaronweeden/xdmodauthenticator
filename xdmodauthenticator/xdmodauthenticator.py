@@ -18,6 +18,11 @@ class XDMoDLoginHandler(BaseHandler):
         username_claim_field = self.authenticator.username_claim_field
         audience = self.authenticator.expected_audience
 
+        _url = url_path_join(self.hub.server.base_url, 'home')
+        next_url = self.get_argument('next', default=False)
+        if next_url:
+            _url = next_url
+
         cookie = self.get_cookie(self.authenticator.xdmod_cookie_name, None)
         if cookie:
             try:
@@ -27,18 +32,13 @@ class XDMoDLoginHandler(BaseHandler):
                 elif signing_certificate:
                     claims = self.verify_jwt_with_claims(cookie, signing_certificate, audience)
             except ExpiredSignatureError:
-                self.redirect(self.authenticator.authorization_endpoint)
+                self.redirect(self.authenticator.authentication_endpoint + '?next=' + _url)
         else:
-            self.redirect(self.authenticator.authorization_endpoint)
+            self.redirect(self.authenticator.authentication_endpoint + '?next=' + _url)
 
         username = self.retrieve_username(claims, username_claim_field)
         user = self.user_from_username(username)
         self.set_login_cookie(user)
-
-        _url = url_path_join(self.hub.server.base_url, 'home')
-        next_url = self.get_argument('next', default=False)
-        if next_url:
-             _url = next_url
 
         self.redirect(_url)
 
@@ -94,14 +94,14 @@ class XDMoDAuthenticator(Authenticator):
         config=True,
         help="""Shared secret key for siging JWT token.  If defined, it overrides any setting for signing_certificate""")
 
-    authorization_endpoint = Unicode(
-        default_value='/rest/users/current/api/jsonwebtoken',
+    authentication_endpoint = Unicode(
+        default_value='/rest/auth/jwt-redirect',
         config=True,
         help=""" XDMoD REST endpoint to authorize user """
     )
 
     xdmod_cookie_name = Unicode(
-        default_value='xdmod_jupyterhub_token',
+        default_value='xdmod_jwt',
         config=True,
         help=""" Name of cookie set by XDMoD """
     )
