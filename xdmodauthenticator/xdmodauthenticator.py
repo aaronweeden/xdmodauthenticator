@@ -24,6 +24,7 @@ class XDMoDLoginHandler(BaseHandler):
             _url = next_url
 
         cookie = self.get_cookie(self.authenticator.xdmod_cookie_name, None)
+        print(cookie)
         if cookie:
             try:
                 claims = ""
